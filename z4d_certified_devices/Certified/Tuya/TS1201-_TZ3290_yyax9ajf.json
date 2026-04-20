@@ -4,7 +4,6 @@
     "_vendor": "Moes",
     "_source": "https://github.com/Koenkk/zigbee-herdsman-converters/blob/master/src/devices/moes.ts",
     "_version": "1.0",
-    "_note": "IR functionality uses the Zosung protocol. Cluster ed00 (zosungIRTransmit) handles IR code send/learn via a 5-step command handshake. Cluster e004 (zosungIRControl) triggers learn mode. Both clusters use ZCL commands, not attributes. Requires Zosung cluster support in the plugin.",
     "Identifier": [
         [ "TS1201", "_TZ3290_yyax9ajf" ]
     ],
@@ -37,5 +36,50 @@
         "0001": [ "0020", "0021" ],
         "0006": [ "0000" ]
     },
-    "BatteryDevice": 1
+    "BatteryDevice": 1,
+    "ed00_CMD": {
+        "_note": "Zosung IR Transmit cluster (0xed00) - 5-step command handshake, no ZCL attributes. seq wraps at 0x10000. Chunks are max 0x38 (56) bytes each.",
+        "00": {
+            "action_type": "ZosungIRInit",
+            "sensor_type": "ir_code_transfer",
+            "fields": "seq(uint16), length(uint32), unk1(uint32), unk2(uint16), unk3(uint8), cmd(uint8), unk4(uint16)",
+            "note": "cmd=0x01 coordinator->device (send IR), cmd=0x02 device->coordinator (learn IR). length = total IR payload size."
+        },
+        "01": {
+            "action_type": "ZosungIRInitAck",
+            "fields": "zero(uint8), seq(uint16), length(uint32), unk1(uint32), unk2(uint16), unk3(uint8), cmd(uint8), unk4(uint16)",
+            "note": "Sent by coordinator to acknowledge cmd00 and request first chunk via cmd02."
+        },
+        "02": {
+            "action_type": "ZosungIRChunkReq",
+            "fields": "seq(uint16), position(uint32), maxlen(uint8)",
+            "note": "Coordinator requests msgpart starting at position, up to maxlen=0x38 bytes. Repeated until all chunks received."
+        },
+        "03": {
+            "action_type": "ZosungIRChunk",
+            "sensor_type": "ir_fragment",
+            "fields": "zero(uint8), seq(uint16), position(uint32), msgpart(OCTET_STR), msgpartcrc(uint8)",
+            "note": "Carries one chunk of IR payload. msgpartcrc = XOR checksum over msgpart bytes. Reassemble chunks in order by position."
+        },
+        "04": {
+            "action_type": "ZosungIRDone",
+            "fields": "zero0(uint8), seq(uint16), zero1(uint16)",
+            "note": "All chunks received. Coordinator sends this to signal transfer complete; device replies with cmd05."
+        },
+        "05": {
+            "action_type": "ZosungIRFinal",
+            "sensor_type": "learned_ir_code",
+            "fields": "seq(uint16), zero(uint16)",
+            "note": "Final ack. Reassembled buffer encodes to base64 string -> exposed as learned_ir_code widget (Text)."
+        }
+    },
+    "e004_CMD": {
+        "_note": "Zosung IR Control cluster (0xe004) - single JSON buffer command, no ZCL attributes.",
+        "00": {
+            "action_type": "ZosungIRLearnMode",
+            "sensor_type": "learn_ir_code",
+            "fields": "data(buffer)",
+            "note": "Send JSON buffer to device. Payload {\"study\": 0} activates IR learning mode (Switch widget)."
+        }
+    }
 }
