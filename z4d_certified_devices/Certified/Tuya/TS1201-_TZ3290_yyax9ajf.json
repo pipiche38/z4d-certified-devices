@@ -1,6 +1,10 @@
 {
-    "_description": "Tuya TS1201 IR Repeater / IR Blaster",
+    "_description": "Moes UFO-R11 Universal Smart IR Remote Control (Zosung protocol)",
+    "_model": "UFO-R11",
+    "_vendor": "Moes",
+    "_source": "https://github.com/Koenkk/zigbee-herdsman-converters/blob/master/src/devices/moes.ts",
     "_version": "1.0",
+    "_note": "IR functionality uses the Zosung protocol. Cluster ed00 (zosungIRTransmit) handles IR code send/learn via a 5-step command handshake. Cluster e004 (zosungIRControl) triggers learn mode. Both clusters use ZCL commands, not attributes. Requires Zosung cluster support in the plugin.",
     "Identifier": [
         [ "TS1201", "_TZ3290_yyax9ajf" ]
     ],
@@ -16,17 +20,22 @@
             "ed00": "",
             "0019": "",
             "000a": "",
-            "Type": "Switch"
+            "Type": "Switch/Text/SwitchIRCode"
         }
     },
     "Type": "",
-    "ClusterToBind": [ "0006" ],
+    "ClusterToBind": [ "0001", "0006" ],
     "ConfigureReporting": {
+        "0001": { "Attributes": {
+            "0020": { "DataType": "20", "MinInterval": "0005", "MaxInterval": "A8C0", "TimeOut": "0000", "Change": "01" },
+            "0021": { "DataType": "20", "MinInterval": "0005", "MaxInterval": "A8C0", "TimeOut": "0000", "Change": "01" }
+        }},
         "0006": { "Attributes": { "0000": { "DataType": "10", "MinInterval": "0001", "MaxInterval": "012C", "TimeOut": "0000", "Change": "01" } } }
     },
     "ReadAttributes": {
         "0000": [ "0000", "0001", "0002", "0003", "0004", "0005", "0007" ],
         "0001": [ "0020", "0021" ],
         "0006": [ "0000" ]
-    }
+    },
+    "BatteryDevice": 1
 }
